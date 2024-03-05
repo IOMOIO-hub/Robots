@@ -13,6 +13,9 @@ import log.Logger;
 
 public class MainApplicationFrame extends JFrame {
     private final JDesktopPane desktopPane = new JDesktopPane();
+
+    private LogWindow logWindow;
+    private GameWindow gameWindow;
     
     public MainApplicationFrame() {
 
@@ -24,8 +27,10 @@ public class MainApplicationFrame extends JFrame {
 
         setContentPane(desktopPane);
 
-        addWindow(initLogWindow(10, 10, 300, 800));
-        addWindow(initGameWindow(320, 10, 400, 400));
+        logWindow = initLogWindow();
+        addWindow(logWindow, 10, 10, 300, 800);
+        gameWindow = initGameWindow();
+        addWindow(gameWindow, 320, 10, 400, 400);
 
         setJMenuBar(generateMenuBar());
         setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
@@ -40,11 +45,6 @@ public class MainApplicationFrame extends JFrame {
             }
         });
     }
-    
-    protected void addWindow(JInternalFrame frame) {
-        desktopPane.add(frame);
-        frame.setVisible(true);
-    }
 
     protected void closeWithConfirmation() {
         if (JOptionPane.showConfirmDialog(
@@ -55,8 +55,9 @@ public class MainApplicationFrame extends JFrame {
                 JOptionPane.QUESTION_MESSAGE
             ) == JOptionPane.YES_OPTION)
         {
+            logWindow.dispose();
+            gameWindow.dispose();
             dispose();
-            System.exit(0);
         }
     }
 
@@ -120,21 +121,27 @@ public class MainApplicationFrame extends JFrame {
         return menuBar;
     }
 
-    protected LogWindow initLogWindow(int x, int y, int width, int height) {
+    protected void addWindow(JInternalFrame frame) {
+        desktopPane.add(frame);
+        frame.setVisible(true);
+    }
+
+    protected void addWindow(JInternalFrame frame, int x, int y, int width, int height) {
+        frame.setLocation(x, y);
+        frame.setSize(width, height);
+        addWindow(frame);
+    }
+
+    protected LogWindow initLogWindow() {
         LogWindow logWindow = new LogWindow(Logger.getDefaultLogSource());
-        logWindow.setLocation(x, y);
-        logWindow.setSize(width, height);
 
         logWindow.pack();
         Logger.debug("Протокол работает");
         return logWindow;
     }
 
-    protected GameWindow initGameWindow(int x, int y, int width, int height) {
-        GameWindow gameWindow = new GameWindow();
-        gameWindow.setLocation(x, y);
-        gameWindow.setSize(width, height);
-        return gameWindow;
+    protected GameWindow initGameWindow() {
+        return new GameWindow();
     }
     
     private void setLookAndFeel(String className) {
