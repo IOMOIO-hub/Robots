@@ -2,20 +2,18 @@ package gui;
 
 import java.awt.Dimension;
 import java.awt.Toolkit;
-import java.awt.event.ActionListener;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.WindowAdapter;
+import java.awt.event.*;
 
 import javax.swing.*;
 
 import log.Logger;
 
 public class MainApplicationFrame extends JFrame {
+
     private final JDesktopPane desktopPane = new JDesktopPane();
 
-    private LogWindow logWindow;
-    private GameWindow gameWindow;
+    private final LogWindow logWindow;
+    private final GameWindow gameWindow;
     
     public MainApplicationFrame() {
 
@@ -40,7 +38,7 @@ public class MainApplicationFrame extends JFrame {
 
         addWindowListener(new WindowAdapter() {
             @Override
-            public void windowClosing(java.awt.event.WindowEvent windowEvent) {
+            public void windowClosing(WindowEvent windowEvent) {
                 closeWithConfirmation();
             }
         });
@@ -126,8 +124,8 @@ public class MainApplicationFrame extends JFrame {
         frame.setVisible(true);
     }
 
-    protected void addWindow(JInternalFrame frame, int x, int y, int width, int height) {
-        frame.setLocation(x, y);
+    protected void addWindow(JInternalFrame frame, int x_location, int y_location, int width, int height) {
+        frame.setLocation(x_location, y_location);
         frame.setSize(width, height);
         addWindow(frame);
     }
