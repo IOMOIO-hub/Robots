@@ -1,12 +1,17 @@
 package gui;
 
-import java.awt.Dimension;
-import java.awt.Toolkit;
+import java.awt.*;
 import java.awt.event.*;
+import java.beans.PropertyVetoException;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 import javax.swing.*;
 
 import log.Logger;
+import state.AppState;
+import state.WindowState;
 
 public class MainApplicationFrame extends JFrame {
 
@@ -14,21 +19,13 @@ public class MainApplicationFrame extends JFrame {
 
     private final LogWindow logWindow;
     private final GameWindow gameWindow;
-    
+
     public MainApplicationFrame() {
-
-        int inset = 50;        
-        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-        setBounds(inset, inset,
-            screenSize.width  - inset * 2,
-            screenSize.height - inset * 2);
-
         setContentPane(desktopPane);
 
         logWindow = initLogWindow();
-        addWindow(logWindow, 10, 10, 300, 800);
         gameWindow = initGameWindow();
-        addWindow(gameWindow, 320, 10, 400, 400);
+        restoreState();
 
         setJMenuBar(generateMenuBar());
         setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
@@ -51,8 +48,8 @@ public class MainApplicationFrame extends JFrame {
                 "Подтверждение закрытия",
                 JOptionPane.YES_NO_OPTION,
                 JOptionPane.QUESTION_MESSAGE
-            ) == JOptionPane.YES_OPTION)
-        {
+        ) == JOptionPane.YES_OPTION) {
+            storeState();
             logWindow.dispose();
             gameWindow.dispose();
             dispose();
@@ -72,7 +69,7 @@ public class MainApplicationFrame extends JFrame {
         menuItem.addActionListener(listener);
         return menuItem;
     }
-    
+
     private JMenuBar generateMenuBar() {
         JMenuBar menuBar = new JMenuBar();
 
@@ -80,12 +77,12 @@ public class MainApplicationFrame extends JFrame {
         menuBar.add(mainMenu);
 
         mainMenu.add(createMenuItem(
-                "Quit",
-                KeyStroke.getKeyStroke(KeyEvent.VK_Q, InputEvent.ALT_MASK),
-                (event) -> closeWithConfirmation()
+                        "Quit",
+                        KeyStroke.getKeyStroke(KeyEvent.VK_Q, InputEvent.ALT_MASK),
+                        (event) -> closeWithConfirmation()
                 )
         );
-        
+
         JMenu lookAndFeelMenu = createMenu("Режим отображения", KeyEvent.VK_V,
                 "Управление режимом отображения приложения");
         menuBar.add(lookAndFeelMenu);
@@ -119,15 +116,17 @@ public class MainApplicationFrame extends JFrame {
         return menuBar;
     }
 
-    protected void addWindow(JInternalFrame frame) {
-        desktopPane.add(frame);
-        frame.setVisible(true);
+    protected void addWindow(JInternalFrame window) {
+        desktopPane.add(window);
+        window.setVisible(true);
     }
 
-    protected void addWindow(JInternalFrame frame, int x_location, int y_location, int width, int height) {
-        frame.setLocation(x_location, y_location);
-        frame.setSize(width, height);
-        addWindow(frame);
+    protected void addWindow(JInternalFrame window, Point location, Dimension size, boolean isIcon) {
+        window.setLocation(location);
+        window.setSize(size);
+        System.out.println(isIcon);
+        addWindow(window);
+        try { window.setIcon(isIcon); } catch (PropertyVetoException ignored) {}
     }
 
     protected LogWindow initLogWindow() {
@@ -141,15 +140,40 @@ public class MainApplicationFrame extends JFrame {
     protected GameWindow initGameWindow() {
         return new GameWindow();
     }
-    
+
     private void setLookAndFeel(String className) {
         try {
             UIManager.setLookAndFeel(className);
             SwingUtilities.updateComponentTreeUI(this);
-        }
-        catch (ClassNotFoundException | InstantiationException
-            | IllegalAccessException | UnsupportedLookAndFeelException e) {
+        } catch (ClassNotFoundException | InstantiationException
+                 | IllegalAccessException | UnsupportedLookAndFeelException e) {
             // just ignore
+        }
+    }
+
+    private void storeState() {
+        String stateFilePath = System.getProperty("user.home") + File.separator + "state.dat";
+        try (ObjectOutputStream stream = new ObjectOutputStream(Files.newOutputStream(Paths.get(stateFilePath)))) {
+            stream.writeObject(new AppState(gameWindow, logWindow));
+        } catch (IOException e) {
+            e.printStackTrace(System.out);
+        }
+    }
+
+    private void restoreState() {
+        String stateFilePath = System.getProperty("user.home") + File.separator + "state.dat";
+        try (ObjectInputStream stream = new ObjectInputStream(Files.newInputStream(Paths.get(stateFilePath)))) {
+            AppState state = (AppState) stream.readObject();
+
+            WindowState logWindowState = state.getLogWindowState();
+            addWindow(logWindow, logWindowState.getLocation(), logWindowState.getSize(), logWindowState.getIsIcon());
+
+            WindowState gameWindowState = state.getGameWindowState();
+            addWindow(gameWindow, gameWindowState.getLocation(), gameWindowState.getSize(), gameWindowState.getIsIcon());
+        }
+        catch (IOException | ClassNotFoundException e) {
+            addWindow(logWindow, new Point(10, 10), new Dimension(300, 400), false);
+            addWindow(gameWindow, new Point(320, 10), new Dimension(400, 400), false);
         }
     }
 }
