@@ -6,25 +6,22 @@ import java.beans.PropertyVetoException;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 
 import javax.swing.*;
 
 import log.Logger;
-import state.AppState;
 import state.WindowState;
+import state.WindowWithState;
 
 public class MainApplicationFrame extends JFrame {
 
     private final JDesktopPane desktopPane = new JDesktopPane();
-
-    private final LogWindow logWindow;
-    private final GameWindow gameWindow;
+    private final ArrayList<WindowWithState> windows = new ArrayList<>();
 
     public MainApplicationFrame() {
         setContentPane(desktopPane);
 
-        logWindow = initLogWindow();
-        gameWindow = initGameWindow();
         restoreState();
 
         setJMenuBar(generateMenuBar());
@@ -50,8 +47,8 @@ public class MainApplicationFrame extends JFrame {
                 JOptionPane.QUESTION_MESSAGE
         ) == JOptionPane.YES_OPTION) {
             storeState();
-            logWindow.dispose();
-            gameWindow.dispose();
+            for (WindowWithState window: windows)
+                window.dispose();
             dispose();
         }
     }
@@ -124,9 +121,18 @@ public class MainApplicationFrame extends JFrame {
     protected void addWindow(JInternalFrame window, Point location, Dimension size, boolean isIcon) {
         window.setLocation(location);
         window.setSize(size);
-        System.out.println(isIcon);
         addWindow(window);
         try { window.setIcon(isIcon); } catch (PropertyVetoException ignored) {}
+    }
+
+    protected void addDefaultWindows() {
+        LogWindow logWindow = initLogWindow();
+        windows.add(logWindow);
+        addWindow(logWindow, new Point(10, 10), new Dimension(300, 400), false);
+
+        GameWindow gameWindow = initGameWindow();
+        windows.add(gameWindow);
+        addWindow(gameWindow, new Point(320, 10), new Dimension(400, 400), false);
     }
 
     protected LogWindow initLogWindow() {
@@ -154,7 +160,8 @@ public class MainApplicationFrame extends JFrame {
     private void storeState() {
         String stateFilePath = System.getProperty("user.home") + File.separator + "state.dat";
         try (ObjectOutputStream stream = new ObjectOutputStream(Files.newOutputStream(Paths.get(stateFilePath)))) {
-            stream.writeObject(new AppState(gameWindow, logWindow));
+            for (WindowWithState window: windows)
+                stream.writeObject(window.getState());
         } catch (IOException e) {
             e.printStackTrace(System.out);
         }
@@ -163,17 +170,23 @@ public class MainApplicationFrame extends JFrame {
     private void restoreState() {
         String stateFilePath = System.getProperty("user.home") + File.separator + "state.dat";
         try (ObjectInputStream stream = new ObjectInputStream(Files.newInputStream(Paths.get(stateFilePath)))) {
-            AppState state = (AppState) stream.readObject();
-
-            WindowState logWindowState = state.getLogWindowState();
-            addWindow(logWindow, logWindowState.getLocation(), logWindowState.getSize(), logWindowState.getIsIcon());
-
-            WindowState gameWindowState = state.getGameWindowState();
-            addWindow(gameWindow, gameWindowState.getLocation(), gameWindowState.getSize(), gameWindowState.getIsIcon());
+            while (true) {
+                WindowState state = (WindowState) stream.readObject();
+                WindowWithState window;
+                switch (state.getTitle()) {
+                    case "Игровое поле": window = new GameWindow(state); break;
+                    case "Протокол работы": window = new LogWindow(state); break;
+                    default: window = null;
+                }
+                if (window != null) {
+                    windows.add(window);
+                    addWindow(window, state.getLocation(), state.getSize(), state.getIsIcon());
+                }
+            }
         }
         catch (IOException | ClassNotFoundException e) {
-            addWindow(logWindow, new Point(10, 10), new Dimension(300, 400), false);
-            addWindow(gameWindow, new Point(320, 10), new Dimension(400, 400), false);
+            if (windows.isEmpty())
+                addDefaultWindows();
         }
     }
 }
