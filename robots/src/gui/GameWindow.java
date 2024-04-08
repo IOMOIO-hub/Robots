@@ -1,20 +1,26 @@
 package gui;
 
-import java.awt.BorderLayout;
+import state.WindowState;
+import state.WindowWithState;
 
-import javax.swing.JInternalFrame;
+import java.awt.*;
+
 import javax.swing.JPanel;
 
-public class GameWindow extends JInternalFrame
+public class GameWindow extends WindowWithState
 {
     private final GameVisualizer m_visualizer;
-    public GameWindow() 
+    public GameWindow()
     {
-        super("Игровое поле", true, true, true, true);
+        super("Игровое поле");
         m_visualizer = new GameVisualizer();
         JPanel panel = new JPanel(new BorderLayout());
         panel.add(m_visualizer, BorderLayout.CENTER);
         getContentPane().add(panel);
         pack();
+    }
+
+    public GameWindow(WindowState state) {
+        this();
     }
 }
