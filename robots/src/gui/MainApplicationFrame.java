@@ -6,24 +6,26 @@ import java.beans.PropertyVetoException;
 
 import javax.swing.*;
 
+import model.Robot;
 import log.Logger;
 import state.WindowWithState;
 
 public class MainApplicationFrame extends JFrame {
 
     private final JDesktopPane desktopPane = new JDesktopPane();
-    private final LogWindow logWindow;
-    private final GameWindow gameWindow;
-
 
     public MainApplicationFrame() {
         setContentPane(desktopPane);
 
+        Robot robot = new Robot(100, 100);
 
-        logWindow = initLogWindow();
-        gameWindow = initGameWindow();
+        LogWindow logWindow = initLogWindow();
+        GameWindow gameWindow = initGameWindow(robot);
+        RobotPositionWindow robotPositionWindow = new RobotPositionWindow(robot);
+
         addWindow(logWindow, new Point(10, 10), new Dimension(300, 400), false);
         addWindow(gameWindow, new Point(320, 10), new Dimension(400, 400), false);
+        addWindow(robotPositionWindow, new Point(730, 10), new Dimension(300, 100), false);
         restoreState();
 
         setJMenuBar(generateMenuBar());
@@ -150,17 +152,16 @@ public class MainApplicationFrame extends JFrame {
         return logWindow;
     }
 
-    protected GameWindow initGameWindow() {
-        return new GameWindow();
+    protected GameWindow initGameWindow(Robot robot) {
+        return new GameWindow(robot);
     }
 
     private void setLookAndFeel(String className) {
         try {
             UIManager.setLookAndFeel(className);
             SwingUtilities.updateComponentTreeUI(this);
-        } catch (ClassNotFoundException | InstantiationException
-                 | IllegalAccessException | UnsupportedLookAndFeelException e) {
-            // just ignore
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException |
+                 UnsupportedLookAndFeelException ignore) {
         }
     }
 
