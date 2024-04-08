@@ -3,25 +3,27 @@ package gui;
 import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyVetoException;
-import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.ArrayList;
 
 import javax.swing.*;
 
 import log.Logger;
-import state.WindowState;
 import state.WindowWithState;
 
 public class MainApplicationFrame extends JFrame {
 
     private final JDesktopPane desktopPane = new JDesktopPane();
-    private final ArrayList<WindowWithState> windows = new ArrayList<>();
+    private final LogWindow logWindow;
+    private final GameWindow gameWindow;
+
 
     public MainApplicationFrame() {
         setContentPane(desktopPane);
 
+
+        logWindow = initLogWindow();
+        gameWindow = initGameWindow();
+        addWindow(logWindow, new Point(10, 10), new Dimension(300, 400), false);
+        addWindow(gameWindow, new Point(320, 10), new Dimension(400, 400), false);
         restoreState();
 
         setJMenuBar(generateMenuBar());
@@ -46,10 +48,22 @@ public class MainApplicationFrame extends JFrame {
                 JOptionPane.YES_NO_OPTION,
                 JOptionPane.QUESTION_MESSAGE
         ) == JOptionPane.YES_OPTION) {
-            storeState();
-            for (WindowWithState window: windows)
-                window.dispose();
+            saveStateConfirmation();
+            for (JInternalFrame frame : desktopPane.getAllFrames())
+                frame.dispose();
             dispose();
+        }
+    }
+
+    protected void saveStateConfirmation() {
+        if (JOptionPane.showConfirmDialog(
+                this,
+                "Сохранить текущее состояние окон?",
+                "Сохранение",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.QUESTION_MESSAGE
+        ) == JOptionPane.YES_OPTION) {
+            storeState();
         }
     }
 
@@ -122,17 +136,10 @@ public class MainApplicationFrame extends JFrame {
         window.setLocation(location);
         window.setSize(size);
         addWindow(window);
-        try { window.setIcon(isIcon); } catch (PropertyVetoException ignored) {}
-    }
-
-    protected void addDefaultWindows() {
-        LogWindow logWindow = initLogWindow();
-        windows.add(logWindow);
-        addWindow(logWindow, new Point(10, 10), new Dimension(300, 400), false);
-
-        GameWindow gameWindow = initGameWindow();
-        windows.add(gameWindow);
-        addWindow(gameWindow, new Point(320, 10), new Dimension(400, 400), false);
+        try {
+            window.setIcon(isIcon);
+        } catch (PropertyVetoException ignored) {
+        }
     }
 
     protected LogWindow initLogWindow() {
@@ -158,35 +165,14 @@ public class MainApplicationFrame extends JFrame {
     }
 
     private void storeState() {
-        String stateFilePath = System.getProperty("user.home") + File.separator + "state.dat";
-        try (ObjectOutputStream stream = new ObjectOutputStream(Files.newOutputStream(Paths.get(stateFilePath)))) {
-            for (WindowWithState window: windows)
-                stream.writeObject(window.getState());
-        } catch (IOException e) {
-            e.printStackTrace(System.out);
-        }
+        for (JInternalFrame frame : desktopPane.getAllFrames())
+            if (frame instanceof WindowWithState)
+                ((WindowWithState) frame).store();
     }
 
     private void restoreState() {
-        String stateFilePath = System.getProperty("user.home") + File.separator + "state.dat";
-        try (ObjectInputStream stream = new ObjectInputStream(Files.newInputStream(Paths.get(stateFilePath)))) {
-            while (true) {
-                WindowState state = (WindowState) stream.readObject();
-                WindowWithState window;
-                switch (state.getTitle()) {
-                    case "Игровое поле": window = new GameWindow(state); break;
-                    case "Протокол работы": window = new LogWindow(state); break;
-                    default: window = null;
-                }
-                if (window != null) {
-                    windows.add(window);
-                    addWindow(window, state.getLocation(), state.getSize(), state.getIsIcon());
-                }
-            }
-        }
-        catch (IOException | ClassNotFoundException e) {
-            if (windows.isEmpty())
-                addDefaultWindows();
-        }
+        for (JInternalFrame frame : desktopPane.getAllFrames())
+            if (frame instanceof WindowWithState)
+                ((WindowWithState) frame).restore();
     }
 }

@@ -56,6 +56,6 @@ public class LogWindow extends WindowWithState implements LogChangeListener
     }
     public LogWindow(WindowState state) {
         this(Logger.getDefaultLogSource());
-        // Могу использовать здесь state.getAdditionalInfo()
+//         Могу использовать здесь state.getAdditionalInfo()
     }
 }
