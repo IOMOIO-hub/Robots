@@ -98,8 +98,8 @@ public class GameVisualizer extends JPanel implements Observer
     }
     
     private void drawRobot(Graphics2D g, int x, int y, double direction) {
-        int robotCenterX = round(m_robotPositionX); 
-        int robotCenterY = round(m_robotPositionY);
+        int robotCenterX = round(x);
+        int robotCenterY = round(y);
         AffineTransform t = AffineTransform.getRotateInstance(direction, robotCenterX, robotCenterY); 
         g.setTransform(t);
         g.setColor(Color.MAGENTA);

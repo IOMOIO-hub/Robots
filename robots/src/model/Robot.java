@@ -10,7 +10,7 @@ public class Robot extends Observable {
     private static final double maxVelocity = 0.1;
     private static final double maxAngularVelocity = 0.003;
 
-    public Robot(int x, int y){
+    public Robot(int x, int y) {
         super();
         m_robotPositionX = x;
         m_robotPositionY = y;
@@ -37,12 +37,8 @@ public class Robot extends Observable {
         if (distance < 0.5) return;
 
         double angleToTarget = angleTo(m_robotPositionX, m_robotPositionY, targetPositionX, targetPositionY);
-        double angularVelocity = 0;
-
-        double diff = asNormalizedRadians(angleToTarget - m_robotDirection);
-
-        if (diff < Math.PI) angularVelocity = maxAngularVelocity;
-        if (diff > Math.PI) angularVelocity = -maxAngularVelocity;
+        double angleDifference = asNormalizedRadians(angleToTarget - m_robotDirection);
+        double angularVelocity = (angleDifference < Math.PI) ? maxAngularVelocity : -maxAngularVelocity;
 
         moveRobot(maxVelocity, angularVelocity, 10);
 
@@ -64,12 +60,13 @@ public class Robot extends Observable {
     }
 
     private static double asNormalizedRadians(double angle) {
-        while (angle < 0) angle += 2*Math.PI;
-        while (angle >= 2*Math.PI) angle -= 2*Math.PI;
+        while (angle < 0) angle += 2 * Math.PI;
+        while (angle >= 2 * Math.PI) angle -= 2 * Math.PI;
         return angle;
     }
 
-    private void moveRobot(double velocity, double angularVelocity, double duration) {
+    private void moveRobot(double velocity, double angularVelocity, double duration)
+    {
         velocity = applyLimits(velocity, 0, maxVelocity);
         angularVelocity = applyLimits(angularVelocity, -maxAngularVelocity, maxAngularVelocity);
 

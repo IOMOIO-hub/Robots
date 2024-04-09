@@ -9,9 +9,10 @@ import java.util.Observer;
 
 import javax.swing.*;
 
-public class RobotPositionWindow extends WindowWithState implements Observer {
-    private Robot robot;
-    private JTextArea textField;
+public class RobotPositionWindow extends WindowWithState implements Observer
+{
+    private final Robot robot;
+    private final JTextArea textField;
 
     public RobotPositionWindow(Robot robot){
         super("Окно состояния робота");
@@ -28,11 +29,9 @@ public class RobotPositionWindow extends WindowWithState implements Observer {
     }
 
     @Override
-    public void update(Observable o, Object arg) {
-        if (o.equals(robot)) {
-            if (arg.equals("robot moved"))
-                onRobotMoved();
-        }
+    public void update(Observable observable, Object arg) {
+        if (observable.equals(robot) && arg.equals("robot moved"))
+            onRobotMoved();
     }
 
     private void onRobotMoved() {
