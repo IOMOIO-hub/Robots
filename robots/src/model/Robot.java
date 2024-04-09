@@ -2,7 +2,7 @@ package model;
 
 import java.util.Observable;
 
-public class Robot extends Observable{
+public class Robot extends Observable {
     private volatile double m_robotPositionX;
     private volatile double m_robotPositionY;
     private volatile double m_robotDirection = 0;
@@ -43,26 +43,12 @@ public class Robot extends Observable{
 
         if (diff < Math.PI) angularVelocity = maxAngularVelocity;
         if (diff > Math.PI) angularVelocity = -maxAngularVelocity;
-        if (unreachable(targetPositionX, targetPositionY)) angularVelocity = 0;
 
         moveRobot(maxVelocity, angularVelocity, 10);
 
         setChanged();
         notifyObservers("robot moved");
         clearChanged();
-    }
-    private boolean unreachable(double targetPositionX, double targetPositionY) {
-        double dx = targetPositionX - m_robotPositionX;
-        double dy = targetPositionY - m_robotPositionY;
-
-        double newDX = Math.cos(m_robotDirection) * dx + Math.sin(m_robotDirection) * dy;
-        double newDY = Math.cos(m_robotDirection) * dy - Math.sin(m_robotDirection) * dx;
-
-        double maxCurve = maxVelocity / maxAngularVelocity;
-        double dist1 = distance(newDX, newDY, 0, maxCurve);
-        double dist2 = distance(newDX, newDY + maxCurve, 0, 0);
-
-        return !(dist1 > maxCurve) || !(dist2 > maxCurve);
     }
 
     private static double distance(double x1, double y1, double x2, double y2) {
