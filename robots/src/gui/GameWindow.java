@@ -1,26 +1,22 @@
 package gui;
 
-import state.WindowState;
 import state.WindowWithState;
 
 import java.awt.*;
-
 import javax.swing.JPanel;
+
+import model.GameLogic;
 
 public class GameWindow extends WindowWithState
 {
-    private final GameVisualizer m_visualizer;
-    public GameWindow()
+    private final GameVisualizer visualizer;
+    public GameWindow(GameLogic gameLogic)
     {
         super("Игровое поле");
-        m_visualizer = new GameVisualizer();
+        visualizer = new GameVisualizer(gameLogic);
         JPanel panel = new JPanel(new BorderLayout());
-        panel.add(m_visualizer, BorderLayout.CENTER);
+        panel.add(visualizer, BorderLayout.CENTER);
         getContentPane().add(panel);
         pack();
-    }
-
-    public GameWindow(WindowState state) {
-        this();
     }
 }
