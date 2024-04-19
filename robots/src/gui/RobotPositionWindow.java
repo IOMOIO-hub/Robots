@@ -1,6 +1,6 @@
 package gui;
 
-import model.Robot;
+import model.GameLogic;
 import state.WindowWithState;
 
 import java.awt.*;
@@ -11,10 +11,10 @@ import javax.swing.*;
 
 public class RobotPositionWindow extends WindowWithState implements Observer
 {
-    private final Robot robot;
+    private final GameLogic gameLogic;
     private final JTextArea textField;
 
-    public RobotPositionWindow(Robot robot){
+    public RobotPositionWindow(GameLogic gameLogic){
         super("Окно состояния робота");
         JPanel panel = new JPanel(new BorderLayout());
 
@@ -24,17 +24,17 @@ public class RobotPositionWindow extends WindowWithState implements Observer
         getContentPane().add(panel);
         pack();
 
-        this.robot = robot;
-        robot.addObserver(this);
+        this.gameLogic = gameLogic;
+        gameLogic.addObserver(this);
     }
 
     @Override
     public void update(Observable observable, Object arg) {
-        if (observable.equals(robot) && arg.equals("robot moved"))
+        if (observable.equals(gameLogic) && arg.equals("robot moved"))
             onRobotMoved();
     }
 
     private void onRobotMoved() {
-        textField.setText(robot.getInfo());
+        textField.setText(this.gameLogic.getRobotInfo());
     }
 }

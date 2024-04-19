@@ -1,12 +1,12 @@
 package gui;
 
-import model.Robot;
+import model.GameLogic;
+import model.Point;
 
 import java.awt.Color;
 import java.awt.EventQueue;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.Point;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
@@ -20,47 +20,39 @@ import javax.swing.JPanel;
 
 public class GameVisualizer extends JPanel implements Observer
 {
-    private volatile double m_robotPositionX = 100;
-    private volatile double m_robotPositionY = 100; 
-    private volatile double m_robotDirection = 0; 
+    private volatile Point robotPosition = new Point(100, 100);
+    private volatile double robotDirection = 0; 
 
-    private volatile int m_targetPositionX = 150;
-    private volatile int m_targetPositionY = 100;
+    private volatile Point target = new Point(150, 100);
 
-    private final Robot robot;
+    private final GameLogic gameLogic;
     
-    public GameVisualizer(Robot robot)
+    public GameVisualizer(GameLogic gameLogic)
     {
-        Timer m_timer = new Timer("events generator", true);
+        this.gameLogic = gameLogic;
+        this.gameLogic.addObserver(this);
 
-        m_timer.schedule(new TimerTask() {
+        Timer timer = new Timer("events generator", true);
+
+        timer.schedule(new TimerTask() {
             @Override
             public void run() {
+                gameLogic.update(target);
                 onRedrawEvent();
-            }
-        }, 0, 50);
-        m_timer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                robot.update(m_targetPositionX, m_targetPositionY);
             }
         }, 0, 10);
         addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                setTargetPosition(e.getPoint());
+                setTarget(new Point(e.getPoint()));
                 repaint();
             }
         });
         setDoubleBuffered(true);
-
-        this.robot = robot;
-        robot.addObserver(this);
     }
 
-    protected void setTargetPosition(Point p) {
-        m_targetPositionX = p.x;
-        m_targetPositionY = p.y;
+    protected void setTarget(Point target) {
+        this.target = target;
     }
     
     protected void onRedrawEvent() {
@@ -69,11 +61,10 @@ public class GameVisualizer extends JPanel implements Observer
 
     @Override
     public void update(Observable o, Object arg){
-        if (o.equals(robot))
+        if (o.equals(gameLogic))
             if (arg.equals("robot moved")){
-                m_robotPositionX = robot.getRobotPositionX();
-                m_robotPositionY = robot.getRobotPositionY();
-                m_robotDirection = robot.getRobotDirection();
+                robotPosition = this.gameLogic.getRobotPosition();
+                robotDirection = this.gameLogic.getRobotDirection();
             }
     }
     
@@ -85,8 +76,8 @@ public class GameVisualizer extends JPanel implements Observer
     public void paint(Graphics g) {
         super.paint(g);
         Graphics2D g2d = (Graphics2D)g; 
-        drawRobot(g2d, round(m_robotPositionX), round(m_robotPositionY), m_robotDirection);
-        drawTarget(g2d, m_targetPositionX, m_targetPositionY);
+        drawRobot(g2d, round(robotPosition.x), round(robotPosition.y), robotDirection);
+        drawTarget(g2d, (int) target.x, (int) target.y);
     }
     
     private static void fillOval(Graphics g, int centerX, int centerY, int diam1, int diam2) {
@@ -98,8 +89,8 @@ public class GameVisualizer extends JPanel implements Observer
     }
     
     private void drawRobot(Graphics2D g, int x, int y, double direction) {
-        int robotCenterX = Math.min(getWidth(), Math.max(0, round(x)));
-        int robotCenterY = Math.min(getHeight(), Math.max(0, round(y)));
+        int robotCenterX = Math.min(getWidth() - 5, Math.max(5, round(x)));
+        int robotCenterY = Math.min(getHeight() - 5, Math.max(5, round(y)));
 
         AffineTransform t = AffineTransform.getRotateInstance(direction, robotCenterX, robotCenterY);
         g.setTransform(t);

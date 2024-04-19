@@ -6,7 +6,7 @@ import java.beans.PropertyVetoException;
 
 import javax.swing.*;
 
-import model.Robot;
+import model.GameLogic;
 import log.Logger;
 import state.WindowWithState;
 
@@ -17,11 +17,11 @@ public class MainApplicationFrame extends JFrame {
     public MainApplicationFrame() {
         setContentPane(desktopPane);
 
-        Robot robot = new Robot(100, 100);
+        GameLogic gameLogic = new GameLogic();
 
         LogWindow logWindow = initLogWindow();
-        GameWindow gameWindow = initGameWindow(robot);
-        RobotPositionWindow robotPositionWindow = new RobotPositionWindow(robot);
+        GameWindow gameWindow = initGameWindow(gameLogic);
+        RobotPositionWindow robotPositionWindow = new RobotPositionWindow(gameLogic);
 
         addWindow(logWindow, new Point(10, 10), new Dimension(300, 400), false);
         addWindow(gameWindow, new Point(320, 10), new Dimension(400, 400), false);
@@ -152,8 +152,8 @@ public class MainApplicationFrame extends JFrame {
         return logWindow;
     }
 
-    protected GameWindow initGameWindow(Robot robot) {
-        return new GameWindow(robot);
+    protected GameWindow initGameWindow(GameLogic gameLogic) {
+        return new GameWindow(gameLogic);
     }
 
     private void setLookAndFeel(String className) {
